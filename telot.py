@@ -35,7 +35,18 @@ def book(dic, n ,m):
             pickle.dump(ld, f)
         return ld  
 
+if os.path.getsize(nonemptyfile)==0:
+    a = str(input(f'Выберите дату из свежего списка{d.keys()}'))
+    b = str(input(f'Выберите время из свежего списка{d[a]}'))
+    d = d
+if os.path.getsize(nonemptyfile)!=0:
+    with open('my_dict.pkl', 'rb') as f:
+            ld = pickle.load(f)
+    a = str(input(f'Выберите дату из использованного списка{ld.keys()}'))
+    b = str(input(f'Выберите время из использованного списка{ld[a]}'))
+    
 
+user = str(book(d, a, b))
 
 
 @bot.message_handler(commands=['start'])#команда с которой нужно начинать
@@ -50,11 +61,8 @@ def talk(message):
         bot.send_message(message.chat.id, 'Введите название запроса')
     elif message.text=='Запись':
         bot.send_message(message.chat.id, a)
-    elif message.text=='13.04/16:00':
-        a = message.text.split('/')[0]
-        b = message.text.split('/')[1]
-        user = str(book(d, a, b))
-
+    elif message.text=='Запись времени':
+        
         bot.send_message(message.chat.id,  user )
         
       
