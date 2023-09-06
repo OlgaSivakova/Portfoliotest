@@ -82,8 +82,62 @@ def get_video(message):
     
     bot.reply_to(message, 'Данные получены')
   
-    
+name = ''    
 @bot.message_handler(commands=['start'])#команда с которой нужно начинать
+def sql(message):
+    conn = sqlite3.connect('table.sql')
+    cur = conn.cursor()
+    cur.execute('CREATE TABLE IF NOT EXISTS users (id int auto_increment primary key, name varchar(50), date varchar(15))')
+    
+    conn.commit()
+    cur.close()
+    conn.close()
+    
+    bot.send_message(message.chat.id, f'Укажите имя')
+    bot.register_next_step_handler(message, user_name) #регистрация следующей функции позволяет непрерывно их выполнять
+def user_name(message):
+    global name
+    name = message.text.strip()
+    bot.send_message(message.chat.id, f'Укажите дату')
+    bot.register_next_step_handler(message, date)
+    
+def date(message):
+    date = message.text.strip()
+    
+    conn = sqlite3.connect('table.sql')
+    cur = conn.cursor()
+    cur.execute('INSERT INTO users (name, date) VALUES ("%s", "%s")' % (name, date))
+    
+    conn.commit()
+    cur.close()
+    conn.close()
+    
+    bot.send_message(message.chat.id, f'Данные получены')
+
+"""@bot.callback_query_handler(func=lambda call: True)
+def callback(call):
+    if call.data =='users':
+        conn = sqlite3.connect('table.sql')
+        cur = conn.cursor()
+        cur.execute('SELECT * FROM users')
+        users = cur.fetchall() #возвращение всех данных в перемнную
+        info = ''
+        for el in users:
+            info += f'Имя: {el[1]}, Дата записи: {el[2]}\n'
+    
+        cur.close()
+        conn.close()
+        
+        bot.send_message(call.message.chat.id, info)
+    elif call.data =='conc':
+         bot.send_message(call.message.chat.id, 'Введите название видео, из которого хотите извлечь музыку')"""
+        
+
+
+   
+    
+    
+@bot.message_handler(commands=['menu'])#команда с которой нужно начинать    
 def welcom(message):
     bt = types.InlineKeyboardMarkup()
     bt.add(types.InlineKeyboardButton('Больше на сайте', url='https://www.kufar.by/account/my_ads/published'))
@@ -105,6 +159,20 @@ def site(message):
 def talk(message):
     if message.text=='1':
         bot.send_message(message.chat.id, '<b><em>Введите название двух видео</em></b>', parse_mode='html')
+    elif message.text == 'данные':
+        conn = sqlite3.connect('table.sql')
+        cur = conn.cursor()
+        cur.execute('SELECT * FROM users')
+        users = cur.fetchall() #возвращение всех данных в перемнную
+        info = ''
+        for el in users:
+            info += f'Имя: {el[1]}, Дата записи: {el[2]}\n'
+    
+        cur.close()
+        conn.close()
+        
+        bot.send_message(message.chat.id, info)
+        
     elif '|' in message.text:
         firstvideo = message.text.split('|')[0]
         secondvideo = message.text.split('|')[1]
