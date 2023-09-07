@@ -37,12 +37,15 @@ def book(dic, n ,m):
 
                 
         elif m not in dic[n]:
-            txt = f'Запись на это время невозможна. Пожалуйста, проверьте список доступного времени и повторите попытку'
-            
-            return  f'{txt}{dic[n]}'
+           txt = f'Запись на время {m} невозможна. Доступное время: '
+           count = ''
+           for i in dic[n]:
+                count+=i
+                count+=" "
+           return  f'{txt}{count}'
         with open('my_dict.pkl', 'wb') as f:
                     pickle.dump(dic, f)
-        return dic
+        return f'{n}/{m}'
     elif os.path.getsize(nonemptyfile)!=0:
         with open('my_dict.pkl', 'rb') as f:
             ld = pickle.load(f)
@@ -55,23 +58,15 @@ def book(dic, n ,m):
                 ld.update( dirs)
         
         elif m not in ld[n]:
-            txt = f'Запись на это время невозможна. Пожалуйста, проверьте список доступного времени и повторите попытку'
-           
-            return f'{txt} {ld[n]}'
+            txt = f'Запись на время {m} невозможна. Доступное время: '
+            count = ''
+            for i in ld[n]:
+                count+=i
+                count+=" "
+            return f'{txt} {count}'
         with open('my_dict.pkl', 'wb') as f:
                     pickle.dump(ld, f)
-        return ld
-#if os.path.getsize(nonemptyfile)==0:#
-#            a = str(input(f'Выберите дату из свежего списка{d.keys()}'))
-#            b = str(input(f'Выберите время из свежего списка{d[a]}'))
- #           d = d
-#if os.path.getsize(nonemptyfile)!=0:
-#            with open('my_dict.pkl', 'rb') as f:
-#                    ld = pickle.load(f)
-#            a = str(input(f'Выберите дату из использованного списка{ld.keys()}'))
-#            b = str(input(f'Выберите время из использованного списка{ld[a]}'))
-#            user = str(book(d, a, b))
-
+        return f'{n}/{m}'
 
 
 
@@ -102,7 +97,16 @@ def user_name(message):
     bot.register_next_step_handler(message, date)
     
 def date(message):
-    date = message.text.strip()
+    if '.' in message.text and '/' in message.text and ':' in message.text and len(message.text)==11:
+        a = message.text.split('/')[0]
+        b = message.text.split('/')[1]
+        user = str(book(d, a, b))
+    else:
+        bot.send_message(message.chat.id, f'Проверьте корректность данных')
+
+        
+        
+    date = user
     
     conn = sqlite3.connect('table.sql')
     cur = conn.cursor()
@@ -111,26 +115,9 @@ def date(message):
     conn.commit()
     cur.close()
     conn.close()
-    
-    bot.send_message(message.chat.id, f'Данные получены')
-
-"""@bot.callback_query_handler(func=lambda call: True)
-def callback(call):
-    if call.data =='users':
-        conn = sqlite3.connect('table.sql')
-        cur = conn.cursor()
-        cur.execute('SELECT * FROM users')
-        users = cur.fetchall() #возвращение всех данных в перемнную
-        info = ''
-        for el in users:
-            info += f'Имя: {el[1]}, Дата записи: {el[2]}\n'
-    
-        cur.close()
-        conn.close()
-        
-        bot.send_message(call.message.chat.id, info)
-    elif call.data =='conc':
-         bot.send_message(call.message.chat.id, 'Введите название видео, из которого хотите извлечь музыку')"""
+    bt = types.InlineKeyboardMarkup()
+    bt.add(types.InlineKeyboardButton('Записи', callback_data='dat'))
+    bot.send_message(message.chat.id, f'Данные получены',reply_markup= bt)
         
 
 
@@ -142,24 +129,27 @@ def welcom(message):
     bt = types.InlineKeyboardMarkup()
     bt.add(types.InlineKeyboardButton('Больше на сайте', url='https://www.kufar.by/account/my_ads/published'))
     bt.add(types.InlineKeyboardButton('Соеденить видео', callback_data='conc'))
+    bt.add(types.InlineKeyboardButton('Извлечь музыку', callback_data='music'))
+    bt.add(types.InlineKeyboardButton('Обрезать видео', callback_data='cut'))
+    bt.add(types.InlineKeyboardButton('Сделать гифку', callback_data='gifk'))   
+    bt.add(types.InlineKeyboardButton('Записи', callback_data='dat'))
+    bt.add(types.InlineKeyboardButton('Получить информацию', callback_data='inf'))
     bot.send_message(message.chat.id, f'Привет <u>{message.from_user.first_name}!</u> <b>Выберите действие из списка </b>',parse_mode='html', reply_markup= bt)
 
     
 @bot.callback_query_handler(func=lambda callback: True) #функция для кнопки выше
 def callback_message(callback):
     if callback.data =='conc':
-         bot.send_message(callback.message.chat.id, 'Введите название видео, из которого хотите извлечь музыку')
-         
-@bot.message_handler(commands=['site'])#команда с которой нужно начинать
-def site(message):
-   webbrowser.open('https://www.kufar.by/account/my_ads/published')
-
-    
-@bot.message_handler(content_types=['text'])#значение которое будем принимать
-def talk(message):
-    if message.text=='1':
-        bot.send_message(message.chat.id, '<b><em>Введите название двух видео</em></b>', parse_mode='html')
-    elif message.text == 'данные':
+         bot.send_message(callback.message.chat.id, '<b><em>Введите название двух видео</em></b>', parse_mode='html')
+    elif callback.data=='music':
+        bot.send_message(callback.message.chat.id, '<b><em>Введите название видео, из которого хотите извлечь музыку</em></b>', parse_mode='html')
+    elif callback.data=='music':
+        bot.send_message(callback.message.chat.id, '<b><em>Введите название видео, и секунды начала и конца отрезка в формате НАЗВАНИЕ[1,5]</em></b>', parse_mode='html')
+    elif callback.data=='cut':
+        bot.send_message(callback.message.chat.id, '<b><em>Введите название видео, и секунды начала и конца отрезка в формате НАЗВАНИЕ[1,5]</em></b>', parse_mode='html')
+    elif callback.data=='gifk':
+        bot.send_message(callback.message.chat.id, '<b><em>Введите название видео после слова Преобразовать:</em></b>', parse_mode='html')
+    elif callback.data=='dat':
         conn = sqlite3.connect('table.sql')
         cur = conn.cursor()
         cur.execute('SELECT * FROM users')
@@ -171,7 +161,20 @@ def talk(message):
         cur.close()
         conn.close()
         
-        bot.send_message(message.chat.id, info)
+        bot.send_message(callback.message.chat.id, info)
+    elif callback.data=='inf':
+        bot.send_message(callback.message.chat.id, '<b><em>Введите запрос со словом "искать":</em></b>', parse_mode='html')
+         
+@bot.message_handler(commands=['site'])#команда с которой нужно начинать
+def site(message):
+   webbrowser.open('https://www.kufar.by/account/my_ads/published')
+
+    
+@bot.message_handler(content_types=['text'])#значение которое будем принимать
+def talk(message):
+    if message.text=='1':
+        bot.send_message(message.chat.id, '<b><em>Введите название двух видео</em></b>', parse_mode='html')
+
         
     elif '|' in message.text:
         firstvideo = message.text.split('|')[0]
@@ -217,35 +220,33 @@ def talk(message):
             name = newtxt.split(',')[1]
             fsec = int(newtxt.split(',')[2])
             ssec = int(newtxt.split(',')[3])
-            
-                        
-
+           
             pathfrondef2= inputvideotocreate(name)
-            
-            
+     
             video = VideoFileClip(f'{pathfrondef2}').subclip(fsec,ssec)
             video.write_gif('Finalgif.gif')
-            
-            
+                
             bot.send_message(message.chat.id, 'Готово!')
             
-    elif message.text=='Получить информацию':
-        bot.send_message(message.chat.id, 'Введите название запроса')
+        
     elif message.text=='Запись':
         bot.send_message(message.chat.id, 'Введите время и дату в формате ДД/ЧЧ')
+        
     elif '.' in message.text and '/' in message.text and ':' in message.text and len(message.text)==11:
         a = message.text.split('/')[0]
         b = message.text.split('/')[1]
         user = str(book(d, a, b))
 
         bot.send_message(message.chat.id, user)
-        
-      
-    else:
-        mes = message.text
+    elif 'искать' in message.text:
+        mes = message.text.replace('искать', ' ').strip()
         mew = mes.replace(' ', '_')
         page = wikipedia.page(mes)
         bot.send_message(message.chat.id, page.summary)
+      
+    else:
+        bot.send_message(message.chat.id,'Не понимаю ваш запрос, пожалуйста, повторите')
+        
     
 bot.polling(none_stop=True)
 
