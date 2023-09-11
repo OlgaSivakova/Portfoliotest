@@ -93,8 +93,11 @@ def sql(message):
 def user_name(message):
     global name
     name = message.text.strip()
-    bot.send_message(message.chat.id, f'Укажите дату')
-    bot.register_next_step_handler(message, date)
+    if message.text=='/menu' or message.text=='/start':
+        bot.send_message(message.chat.id, f'Для перехода к другой команде, пожалуйста, введите ее ещё раз')
+    else:    
+        bot.send_message(message.chat.id, f'Укажите дату')
+        bot.register_next_step_handler(message, date)
     
 def date(message):
     if '.' in message.text and '/' in message.text and ':' in message.text and len(message.text)==11:
@@ -133,6 +136,7 @@ def welcom(message):
     bt.add(types.InlineKeyboardButton('Обрезать видео', callback_data='cut'))
     bt.add(types.InlineKeyboardButton('Сделать гифку', callback_data='gifk'))   
     bt.add(types.InlineKeyboardButton('Записи', callback_data='dat'))
+    bt.add(types.InlineKeyboardButton('Актуальное время для записи', callback_data='book'))
     bt.add(types.InlineKeyboardButton('Получить информацию', callback_data='inf'))
     bot.send_message(message.chat.id, f'Привет <u>{message.from_user.first_name}!</u> <b>Выберите действие из списка </b>',parse_mode='html', reply_markup= bt)
 
@@ -149,6 +153,20 @@ def callback_message(callback):
         bot.send_message(callback.message.chat.id, '<b><em>Введите название видео, и секунды начала и конца отрезка в формате НАЗВАНИЕ[1,5]</em></b>', parse_mode='html')
     elif callback.data=='gifk':
         bot.send_message(callback.message.chat.id, '<b><em>Введите название видео после слова Преобразовать:</em></b>', parse_mode='html')
+    elif callback.data=='book':
+        if os.path.getsize(nonemptyfile)==0:
+            for k,v in d.items():
+                v=', '.join(v)
+                
+                bot.send_message(callback.message.chat.id, f'Cвободная дата {k} Свободное время: {v}')
+        
+        elif os.path.getsize(nonemptyfile)!=0:
+            with open('my_dict.pkl', 'rb') as f:
+                ld = pickle.load(f)
+            for k,v in ld.items():
+                v=', '.join(v)
+                bot.send_message(callback.message.chat.id, f'Cвободная дата {k} Свободное время: {v}')
+       
     elif callback.data=='dat':
         conn = sqlite3.connect('table.sql')
         cur = conn.cursor()
